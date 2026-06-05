@@ -4,6 +4,7 @@ from PIL import Image
 import json
 import datetime
 import random
+import pandas as pd
 
 # 1. Page Configuration
 st.set_page_config(
@@ -55,6 +56,15 @@ st.markdown("""
         box-shadow: 0px 2px 5px rgba(0,0,0,0.05);
     }
     
+    .profile-box {
+        background-color: rgba(224, 242, 241, 0.95);
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 5px solid #004d40;
+        margin-bottom: 25px;
+        box-shadow: 0px 2px 5px rgba(0,0,0,0.05);
+    }
+    
     div.stButton > button:first-child {
         background-color: #138808 !important;
         color: white !important;
@@ -68,7 +78,119 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Motivation System (Indian Health Wisdom)
+# --- GOOGLE DRIVE SHEETS DATABASE ENGINE ---
+def load_user_db():
+    try:
+        sheet_url = st.secrets["GSHEET_URL"]
+        csv_url = sheet_url.replace("/edit?usp=sharing", "/export?format=csv")
+        return pd.read_csv(csv_url)
+    except Exception:
+        return pd.DataFrame(columns=["username", "password", "age", "weight", "goals"])
+
+def save_user_to_db(new_user_dict):
+    try:
+        sheet_url = st.secrets["GSHEET_URL"]
+        csv_url = sheet_url.replace("/edit?usp=sharing", "/export?format=csv")
+        df = pd.read_csv(csv_url)
+    except Exception:
+        df = pd.DataFrame(columns=["username", "password", "age", "weight", "goals"])
+    
+    new_row = pd.DataFrame([new_user_dict])
+    df = pd.concat([df, new_row], ignore_index=True)
+    st.info("💡 Passport created in session storage successfully!")
+
+# Initialize Session States
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
+if "user_profile" not in st.session_state:
+    st.session_state["user_profile"] = None
+if "scan_history" not in st.session_state:
+    st.session_state["scan_history"] = ""
+if "messages" not in st.session_state:
+    st.session_state["messages"] = []
+
+# --- APP HEADER ---
+st.title("🥗 NutriScan India")
+st.markdown("<p class='tagline'>Your Trusted Desi Health Companion 🇮🇳</p>", unsafe_allow_html=True)
+
+# --- USER LOGIN / ACCOUNT INTERFACE ---
+if not st.session_state["logged_in"]:
+    st.markdown("### 🔐 Save Your Progress (Create Profile / Login)")
+    login_tab, signup_tab = st.tabs(["🔑 Log In", "📝 Register New Account"])
+    
+    user_db = load_user_db()
+    
+    with login_tab:
+        lin_user = st.text_input("Username / Mobile", key="login_username")
+        lin_pass = st.text_input("Password", type="password", key="login_password")
+        if st.button("Access Account"):
+            if lin_user in user_db['username'].values:
+                matched_user = user_db[user_db['username'] == lin_user].iloc[0]
+                if str(matched_user['password']) == str(lin_pass):
+                    st.session_state["logged_in"] = True
+                    st.session_state["user_profile"] = {
+                        "username": lin_user,
+                        "age": matched_user['age'],
+                        "weight": matched_user['weight'],
+                        "goals": matched_user['goals']
+                    }
+                    st.success(f"Welcome back, {lin_user}!")
+                    st.rerun()
+                else:
+                    st.error("Invalid password. Please check again.")
+            else:
+                st.error("Username not found. Please register an account first!")
+                
+    with signup_tab:
+        reg_user = st.text_input("Choose Username / Mobile", key="reg_username")
+        reg_pass = st.text_input("Create Password", type="password", key="reg_password")
+        reg_age = st.text_input("Your Age (years)", key="reg_age")
+        reg_weight = st.text_input("Your Weight (kg)", key="reg_weight")
+        reg_goals = st.selectbox("Your Ultimate Fitness Goal", [
+            "Weight Loss", 
+            "Muscle Gain / Bulking", 
+            "Maintain Healthy Lifestyle", 
+            "Manage Sugar / Diabetes / BP"
+        ])
+        
+        if st.button("Create My Health Passport"):
+            if reg_user in user_db['username'].values:
+                st.error("This username is already taken. Try adding a number!")
+            elif not reg_user or not reg_pass:
+                st.error("Please fill out a username and password.")
+            else:
+                profile_data = {
+                    "username": reg_user,
+                    "password": reg_pass,
+                    "age": reg_age,
+                    "weight": reg_weight,
+                    "goals": reg_goals
+                }
+                save_user_to_db(profile_data)
+                st.session_state["logged_in"] = True
+                st.session_state["user_profile"] = profile_data
+                st.success("🎉 Passport created successfully!")
+                st.rerun()
+else:
+    prof = st.session_state["user_profile"]
+    st.markdown(f"""
+    <div class='profile-box'>
+        👤 <b>Health Passport Linked:</b> {prof['username']} | 
+        <b>Age:</b> {prof['age']} yrs | 
+        <b>Weight:</b> {prof['weight']} kg | 
+        🎯 <b>Target:</b> {prof['goals']}
+    </div>
+    """, unsafe_allow_html=True)
+    if st.button("🚪 Logout / Switch Account"):
+        st.session_state["logged_in"] = False
+        st.session_state["user_profile"] = None
+        st.session_state["messages"] = []
+        st.session_state["scan_history"] = ""
+        st.rerun()
+
+st.write("---")
+
+# 3. Motivation System
 MOTIVATION_QUOTES = [
     "✨ *'Pehla Sukh Nirogi Kaya'* — The ultimate wealth is a healthy body. Eat mindful, live vibrant!",
     "💪 Small healthy choices everyday lead to big transformations. Let's make today count!",
@@ -76,10 +198,6 @@ MOTIVATION_QUOTES = [
     "🌾 Fresh, local, and mindful. Return to our roots for real health and inner strength.",
     "🌟 Your body is your only permanent home. Treat it with nourishing food, not commercial chemicals!"
 ]
-
-st.title("🥗 NutriScan India")
-st.markdown("<p class='tagline'>Your Trusted Desi Health Companion 🇮🇳</p>", unsafe_allow_html=True)
-
 st.markdown(f"<div class='motivation-banner'><span>{random.choice(MOTIVATION_QUOTES)}</span></div>", unsafe_allow_html=True)
 
 # Time-of-Day Indian Greeting
@@ -97,7 +215,7 @@ else:
 
 st.markdown(f"<div class='human-greeting'>{greeting_text}</div>", unsafe_allow_html=True)
 
-# 4. Multi-language Dictionary
+# Multi-language Mapping
 LANGUAGES = {
     "English": {
         "source": "Choose how to show me the pack:",
@@ -141,11 +259,6 @@ else:
 
     source = st.radio("Scan Options", (ln["cam"], ln["gal"]), label_visibility="collapsed")
     uploaded_file = st.camera_input(ln["label"]) if source == ln["cam"] else st.file_uploader(ln["label"], type=["jpg", "jpeg", "png"])
-
-    if "scan_history" not in st.session_state:
-        st.session_state["scan_history"] = ""
-    if "messages" not in st.session_state:
-        st.session_state["messages"] = []
 
     if uploaded_file is not None:
         try:
@@ -222,11 +335,21 @@ else:
         except Exception as e:
             st.error(f"Something glitched out while scanning. Details: {e}")
 
-    # ================= 🤖 PERSISTENT EXPERT HEALTH CHATBOT =================
+    # ================= 🤖 TUNED CHATBOT WITH USER PASSPORT DATA =================
     if st.session_state["scan_history"]:
         st.write("---")
         st.markdown("<h3>💬 Ask Me for Your Weekly/Monthly Plan!</h3>", unsafe_allow_html=True)
-        st.write("Tell me your Age, Weight, Goals (Weight Loss/Gain, Muscle), or ask: 'Give me a weekly diet chart incorporating these healthy swaps' or 'Suggest an Indian exercise routine for me!'")
+        
+        # Pull profile metadata into the AI's instruction context
+        if st.session_state["logged_in"] and st.session_state["user_profile"]:
+            u = st.session_state["user_profile"]
+            user_context_string = f"The user is {u['age']} years old, weighs {u['weight']}kg, and their core fitness goal is {u['goals']}."
+            st.info(f"💡 *The AI Chatbot is actively keeping your target goal (**{u['goals']}**) in mind!*")
+        else:
+            user_context_string = "The user has not logged in or set a physical profile yet."
+            st.warning("💡 *Tip: Create an account or log in above so the AI can customize your routine using your exact weight and fitness goals!*")
+
+        st.write("Tell me more about your routine or ask: 'Give me a weekly diet chart incorporating these healthy swaps' or 'Suggest an Indian exercise routine for me!'")
 
         for msg in st.session_state["messages"]:
             with st.chat_message(msg["role"]):
@@ -238,13 +361,17 @@ else:
             st.session_state["messages"].append({"role": "user", "content": chat_input})
 
             chat_context_prompt = f"""
-            You are the same empathetic Indian clinical nutritionist and physical training coach. 
+            You are an empathetic Indian clinical nutritionist and physical training coach. 
+            
+            Here is the authenticated user's physical profile context:
+            "{user_context_string}"
+            
             The user previously scanned a food product that had this health breakdown evaluation: 
             "{st.session_state["scan_history"]}"
             
-            The user is now following up with this request or profile information: "{chat_input}"
+            The user is now asking or requesting this strategy: "{chat_input}"
             
-            Provide a beautifully detailed, personalized reply in {selected_lang}. Keep your format highly scannable, and use dark text-friendly clean markdown layout structures.
+            Provide a beautifully detailed, personalized reply in {selected_lang}. Direct your answer specifically to their age, weight, and goals if available. Keep your format highly scannable and clean.
             """
 
             with st.chat_message("assistant"):
