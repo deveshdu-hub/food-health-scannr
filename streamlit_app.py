@@ -13,56 +13,66 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 2. Premium Desi Layout Styling with Custom Background Asset
-# Note: Using an abstract unspalsh layout optimized for text legibility over dark/light modes.
+# 2. Strong Dark Text Formatting CSS Overlay (Fixes Dark Mode issues shown in IMG_6368.jpg)
 st.markdown("""
     <style>
+    /* Force background setup */
     .stApp {
-        background-image: linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)), 
+        background-image: linear-gradient(rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.90)), 
         url("https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=1200&q=80");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
     }
-    .main .block-container { padding-top: 1.5rem; }
-    h1 { color: #138808; font-family: 'Georgia', serif; text-align: center; margin-bottom: 0px; text-shadow: 1px 1px 2px #fff; }
-    .tagline { text-align: center; color: #FF9933; font-weight: bold; margin-top: 0px; margin-bottom: 1rem; font-size: 1.1rem; }
     
+    /* OVERRIDE: Force ALL standard text, subheaders, and markdown to deep charcoal dark text */
+    .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp span, .stApp div, .stApp li {
+        color: #111111 !important;
+        font-family: 'Source Sans Pro', sans-serif;
+    }
+    
+    /* Keep distinct brand color headers sharp */
+    h1 { color: #138808 !important; font-family: 'Georgia', serif; text-align: center; margin-bottom: 0px; font-weight: bold; }
+    .tagline { text-align: center; color: #E65100 !important; font-weight: bold; margin-top: 0px; margin-bottom: 1rem; font-size: 1.1rem; }
+    
+    /* Formatting banners explicitly to ensure internal contrast */
     .motivation-banner {
         background: linear-gradient(135deg, #FF9933 0%, #138808 100%);
-        color: white;
         padding: 15px;
         border-radius: 12px;
         text-align: center;
-        font-weight: bold;
-        font-size: 1.05rem;
         box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
         margin-bottom: 20px;
     }
+    .motivation-banner * {
+        color: #ffffff !important; /* Force quote to remain bright white over the gradient */
+        font-weight: bold;
+    }
     
     .human-greeting {
-        background-color: rgba(255, 243, 224, 0.95);
+        background-color: rgba(255, 224, 178, 0.95);
         padding: 15px;
         border-radius: 10px;
         border-left: 5px solid #E65100;
         margin-bottom: 20px;
-        font-style: italic;
         box-shadow: 0px 2px 5px rgba(0,0,0,0.05);
     }
     
+    /* Premium Call To Action Button styling */
     div.stButton > button:first-child {
-        background-color: #138808;
-        color: white;
+        background-color: #138808 !important;
+        color: white !important;
         border-radius: 8px;
         width: 100%;
         font-weight: bold;
         border: none;
-        padding: 10px;
+        padding: 12px;
+        font-size: 1.1rem;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Dynamic Motivation System (Indian Health Wisdom)
+# 3. Motivation System (Indian Health Wisdom)
 MOTIVATION_QUOTES = [
     "✨ *'Pehla Sukh Nirogi Kaya'* — The ultimate wealth is a healthy body. Eat mindful, live vibrant!",
     "💪 Small healthy choices everyday lead to big transformations. Let's make today count!",
@@ -75,7 +85,7 @@ st.title("🥗 NutriScan India")
 st.markdown("<p class='tagline'>Your Trusted Desi Health Companion 🇮🇳</p>", unsafe_allow_html=True)
 
 # Render Motivation Line
-st.markdown(f"<div class='motivation-banner'>{random.choice(MOTIVATION_QUOTES)}</div>", unsafe_allow_html=True)
+st.markdown(f"<div class='motivation-banner'><span>{random.choice(MOTIVATION_QUOTES)}</span></div>", unsafe_allow_html=True)
 
 # Time-of-Day Indian Greeting
 now = datetime.datetime.now()
@@ -100,7 +110,7 @@ LANGUAGES = {
         "gal": "📁 Choose from Phone Gallery",
         "label": "Show me the front design or the nutrition table at the back",
         "analyzing": "🧐 Looking closely at this label... Ek minute haan...",
-        "score": "📊 My Expert Health Score",
+        "score": " My Expert Health Score",
         "good": "💚 Why Your Body Will Thank You (Faayde)",
         "bad": "⚠️ Quick Warning / Red Flags (Nuksan)",
         "verdict": "📝 Final Verdict & Healthy Swaps",
@@ -113,12 +123,12 @@ LANGUAGES = {
         "gal": "📁 गैलरी से फोटो चुनें",
         "label": "पैकेट के सामने का हिस्सा या पीछे की सामग्री लिस्ट दिखाएं",
         "analyzing": "🧐 रुकिए, मैं ध्यान से पढ़ती हूँ... एक मिनट दीजिए...",
-        "score": "📊 मेरा न्यूट्रिशन स्कोर",
-        "good": "💚 आपके शरीर के लिए क्या अच्छा है (فायदे)",
+        "score": " मेरा न्यूट्रिशन स्कोर",
+        "good": "💚 आपके शरीर के लिए क्या अच्छा है (फायदे)",
         "bad": "⚠️ सावधान! इसमें छुपा हुआ नुकसान (रेड फ्लैग्स)",
         "verdict": "📝 फाइनल सलाह और घरेलू विकल्प",
         "alt": "इसकी जगह ये शानदार देसी विकल्प आजमाएं:",
-        "disclaimer": "प्यारा सा नोट: मुझे अपना हेल्थ पार्टनर समझें। किसी गंभीर बीमारी के लिए डॉक्टर की सलाह ज़रूर लें।"
+        "disclaimer": "प्यारा सा... मुझे अपना हेल्थ पार्टनर समझें। किसी गंभीर बीमारी के लिए डॉक्टर की सलाह ज़रूर लें।"
     }
 }
 
@@ -134,7 +144,7 @@ else:
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-2.5-flash')
 
-    source = st.radio(ln["source"], (ln["cam"], ln["gal"]))
+    source = st.radio(st.session_state.get('lang_label_src', 'Options:'), (ln["cam"], ln["gal"]), label_visibility="collapsed")
     uploaded_file = st.camera_input(ln["label"]) if source == ln["cam"] else st.file_uploader(ln["label"], type=["jpg", "jpeg", "png"])
 
     # Maintain running context in Session Memory for the persistent chatbot feature
@@ -149,10 +159,10 @@ else:
             st.image(image, caption='Scanned Food Pack', use_container_width=True)
             
             st.write("---")
-            st.subheader(ln["analyzing"])
+            st.markdown(f"<h3>{ln['analyzing']}</h3>", unsafe_allow_html=True)
             
             prompt = f"""
-            You are a warm, traditional yet medically smart Indian clinical nutritionist.
+            You are an expert clinical nutritionist specialized in Indian packaged snacks. 
             Analyze the provided image of a packaged food item. 
             Your response MUST be divided into two blocks separated exactly by "|||DATA_SPLIT|||".
             
@@ -166,7 +176,7 @@ else:
 
             |||DATA_SPLIT|||
 
-            PART 2: Provide your review text entirely in {selected_lang}.
+            PART 2: Provide your review text entirely in {selected_lang}. Make sure the output headers match the text layout cleanly without duplicate symbols.
             
             Format using these exact headers:
             ### {ln['score']}
@@ -195,13 +205,15 @@ else:
                         
                         if json_str.startswith("```"):
                             lines = json_str.split("\n")
-                            if lines[0].startswith("```"): lines = lines[1:]
+                            if lines[0].startswith("
+```"): lines = lines[1:]
                             if lines[-1].startswith("```"): lines = lines[:-1]
                             json_str = "\n".join(lines).strip()
                         
                         try:
                             nutrition_data = json.loads(json_str)
-                            st.subheader("📊 Nutritional Traffic Meter (Per 100g)")
+                            st.markdown("<h3>📊 Nutritional Traffic Meter (Per 100g)</h3>", unsafe_allow_html=True)
+                            
                             st.write("🔥 **Calories Density**")
                             st.progress(int(nutrition_data.get("calories_percentage", 0)) / 100.0)
                             st.write("🍬 **Refined Sugars / Carbs**")
@@ -215,7 +227,6 @@ else:
                             pass
                         
                         st.markdown(markdown_text)
-                        # Save result context to let chat feature read details later
                         st.session_state["scan_history"] = markdown_text
                     else:
                         st.markdown(raw_result)
@@ -224,11 +235,11 @@ else:
         except Exception as e:
             st.error(f"Something glitched out. Please check image framing. Code detail: {e}")
 
-    # ================= 🤖 UPGRADE: PERSISTENT EXPERT HEALTH CHATBOT =================
+    # ================= 🤖 PERSISTENT EXPERT HEALTH CHATBOT =================
     if st.session_state["scan_history"]:
         st.write("---")
-        st.subheader("💬 Ask Me for Your Weekly/Monthly Plan!")
-        st.info("Tell me your Age, Weight, Goals (Weight Loss/Gain, Muscle), or ask: 'Give me a weekly diet chart incorporating these healthy swaps' or 'Suggest an Indian exercise routine for me!'")
+        st.markdown("<h3>💬 Ask Me for Your Weekly/Monthly Plan!</h3>", unsafe_allow_html=True)
+        st.write("Tell me your Age, Weight, Goals (Weight Loss/Gain, Muscle), or ask: 'Give me a weekly diet chart incorporating these healthy swaps' or 'Suggest an Indian exercise routine for me!'")
 
         # Display conversational logs
         for msg in st.session_state["messages"]:
@@ -241,7 +252,6 @@ else:
                 st.markdown(chat_input)
             st.session_state["messages"].append({"role": "user", "content": chat_input})
 
-            # Formulate chat context containing previous item analytics
             chat_context_prompt = f"""
             You are the same empathetic Indian clinical nutritionist and physical training coach. 
             The user previously scanned a food product that had this health breakdown evaluation: 
@@ -249,7 +259,7 @@ else:
             
             The user is now following up with this request or profile information: "{chat_input}"
             
-            Provide a beautifully detailed, personalized reply in {selected_lang}. If they ask for a weekly/monthly diet plan, layout structural meal rows (Breakfast, Mid-day snack, Lunch, Evening Chai alternative, Dinner) using affordable Indian household choices (like Roti, Sabzi, Dal, Khichdi, Paneer, Curd, Poha). If they ask for exercise, outline simple home/gym schedules (like walking target steps, Yoga, bodyweight squats, Ghar ki koshish workouts). Keep your warm, motivational, human elder-coach tone.
+            Provide a beautifully detailed, personalized reply in {selected_lang}. Keep your format highly scannable, and use dark text-friendly clean markdown layout structures.
             """
 
             with st.chat_message("assistant"):
