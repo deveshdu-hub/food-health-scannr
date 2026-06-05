@@ -18,7 +18,7 @@ st.markdown("""
     <style>
     .stApp {
         background-image: linear-gradient(rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.90)), 
-        url("[https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=1200&q=80](https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=1200&q=80)");
+        url("https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=1200&q=80");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
@@ -119,7 +119,7 @@ LANGUAGES = {
         "label": "पैकेट के सामने का हिस्सा या पीछे की सामग्री लिस्ट दिखाएं",
         "analyzing": "🧐 रुकिए, मैं ध्यान से पढ़ती हूँ... एक मिनट दीजिए...",
         "score": "मेरा न्यूट्रिशन स्कोर",
-        "good": "💚 आपके शरीर के लिए क्या अच्छा है (فायदे)",
+        "good": "💚 आपके शरीर के लिए क्या अच्छा है (फायदे)",
         "bad": "⚠️ सावधान! इसमें छुपा हुआ नुकसान (रेड फ्लैग्स)",
         "verdict": "📝 फाइनल सलाह और घरेलू विकल्प",
         "alt": "इसकी जगह ये शानदार देसी विकल्प आजमाएं:",
@@ -139,4 +139,121 @@ else:
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-2.5-flash')
 
-    source = st.radio("Scan Options", (ln["cam"], ln
+    source = st.radio("Scan Options", (ln["cam"], ln["gal"]), label_visibility="collapsed")
+    uploaded_file = st.camera_input(ln["label"]) if source == ln["cam"] else st.file_uploader(ln["label"], type=["jpg", "jpeg", "png"])
+
+    if "scan_history" not in st.session_state:
+        st.session_state["scan_history"] = ""
+    if "messages" not in st.session_state:
+        st.session_state["messages"] = []
+
+    if uploaded_file is not None:
+        try:
+            image = Image.open(uploaded_file)
+            st.image(image, caption='Scanned Food Pack', use_container_width=True)
+            
+            st.write("---")
+            st.markdown(f"<h3>{ln['analyzing']}</h3>", unsafe_allow_html=True)
+            
+            prompt = f"""
+            You are an expert clinical nutritionist specialized in Indian packaged snacks. 
+            Analyze the provided image of a packaged food item. 
+            Your response MUST be divided into two blocks separated exactly by the text separator "|||DATA_SPLIT|||".
+            
+            PART 1: Output ONLY a raw, single-line JSON string containing estimated nutrition ratings per 100g (0 to 100). Do NOT wrap it in markdown code blocks or write the word 'json'. Output raw text format only:
+            {{"calories_percentage": 50, "sugar_percentage": 20, "sodium_percentage": 40, "fat_percentage": 30}}
+
+            |||DATA_SPLIT|||
+
+            PART 2: Provide your review text entirely in {selected_lang}. 
+            
+            Format using these exact headers:
+            ### {ln['score']}
+            State a bold score out of 10 with a lively reaction.
+            
+            ### {ln['good']}
+            Point out what is decent.
+            
+            ### {ln['bad']}
+            Call out hidden traps (Palm oil, refined sugar, high salt, processing methods).
+            
+            ### {ln['verdict']}
+            Wrap up with a warm recommendation summary.
+            Then list two specific traditional Indian alternative items under the subtitle "**{ln['alt']}**".
+            """
+            
+            if st.button("🔥 Analyze Food Health Level"):
+                with st.spinner('Checking ingredients...'):
+                    response = model.generate_content([prompt, image])
+                    raw_result = response.text
+                    
+                    if "|||DATA_SPLIT|||" in raw_result:
+                        parts = raw_result.split("|||DATA_SPLIT|||")
+                        json_str = parts[0].strip()
+                        markdown_text = parts[1].strip()
+                        
+                        try:
+                            nutrition_data = json.loads(json_str)
+                            st.markdown("<h3>📊 Nutritional Traffic Meter (Per 100g)</h3>", unsafe_allow_html=True)
+                            
+                            c_val = int(nutrition_data.get("calories_percentage", 0)) / 100.0
+                            su_val = int(nutrition_data.get("sugar_percentage", 0)) / 100.0
+                            so_val = int(nutrition_data.get("sodium_percentage", 0)) / 100.0
+                            f_val = int(nutrition_data.get("fat_percentage", 0)) / 100.0
+                            
+                            st.write("🔥 **Calories Density**")
+                            st.progress(max(0.0, min(c_val, 1.0)))
+                            st.write("🍬 **Refined Sugars / Carbs**")
+                            st.progress(max(0.0, min(su_val, 1.0)))
+                            st.write("🧂 **Salt Content (Sodium)**")
+                            st.progress(max(0.0, min(so_val, 1.0)))
+                            st.write("🛢️ **Palm Oil & Heavy Fats**")
+                            st.progress(max(0.0, min(f_val, 1.0)))
+                            st.write("---")
+                        except Exception:
+                            pass
+                        
+                        st.markdown(markdown_text)
+                        st.session_state["scan_history"] = markdown_text
+                    else:
+                        st.markdown(raw_result)
+                        st.session_state["scan_history"] = raw_result
+                    
+        except Exception as e:
+            st.error(f"Something glitched out while scanning. Details: {e}")
+
+    # ================= 🤖 PERSISTENT EXPERT HEALTH CHATBOT =================
+    if st.session_state["scan_history"]:
+        st.write("---")
+        st.markdown("<h3>💬 Ask Me for Your Weekly/Monthly Plan!</h3>", unsafe_allow_html=True)
+        st.write("Tell me your Age, Weight, Goals (Weight Loss/Gain, Muscle), or ask: 'Give me a weekly diet chart incorporating these healthy swaps' or 'Suggest an Indian exercise routine for me!'")
+
+        for msg in st.session_state["messages"]:
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])
+
+        if chat_input := st.chat_input("Ask me for a personalized diet or exercise strategy..."):
+            with st.chat_message("user"):
+                st.markdown(chat_input)
+            st.session_state["messages"].append({"role": "user", "content": chat_input})
+
+            chat_context_prompt = f"""
+            You are the same empathetic Indian clinical nutritionist and physical training coach. 
+            The user previously scanned a food product that had this health breakdown evaluation: 
+            "{st.session_state["scan_history"]}"
+            
+            The user is now following up with this request or profile information: "{chat_input}"
+            
+            Provide a beautifully detailed, personalized reply in {selected_lang}. Keep your format highly scannable, and use dark text-friendly clean markdown layout structures.
+            """
+
+            with st.chat_message("assistant"):
+                with st.spinner("Writing your fitness advice card..."):
+                    chat_response = model.generate_content(chat_context_prompt)
+                    bot_reply = chat_response.text
+                    st.markdown(bot_reply)
+            
+            st.session_state["messages"].append({"role": "assistant", "content": bot_reply})
+
+st.markdown("---")
+st.caption(ln["disclaimer"])
