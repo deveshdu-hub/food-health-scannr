@@ -78,15 +78,28 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- GOOGLE DRIVE SHEETS DATABASE ENGINE ---
-from streamlit_gsheets import GSheetsConnection
+# --- GOOGLE DRIVE DATABASE ENGINE (WEB API) ---
+import requests
 
 def load_user_db():
     try:
-        conn = st.connection("gsheets", type=GSheetsConnection)
-        return conn.read(ttl=0) # ttl=0 ensures it fetches fresh signups instantly
+        url = st.secrets["GSCRIPT_API_URL"]
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            user_list = response.json()
+            return pd.DataFrame(user_list)
+        return pd.DataFrame(columns=["username", "password", "age", "weight", "goals"])
     except Exception:
         return pd.DataFrame(columns=["username", "password", "age", "weight", "goals"])
+
+def save_user_to_db(new_user_dict):
+    try:
+        url = st.secrets["GSCRIPT_API_URL"]
+        # Convert values to strings to prevent transmission issues
+        payload = {k: str(v) for k, v in new_user_dict.items()}
+        requests.post(url, json=payload, timeout=10)
+    except Exception:
+        pass
 
 def save_user_to_db(new_user_dict):
     try:
