@@ -1,93 +1,209 @@
 import streamlit as st
 import google.generativeai as genai
 from PIL import Image
+import json
+import re
 
-# 1. Page Configuration (Makes the app look like a native mobile app on phones)
+# 1. Page Configuration (Indian/Mobile First Layout)
 st.set_page_config(
-    page_title="NutriScan AI", 
-    page_icon="🥗", 
+    page_title="NutriScan India AI", 
+    page_icon="🇮🇳", 
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS to style the app clean and modern
+# Custom Desi Styling
 st.markdown("""
     <style>
-    .main .block-container { padding-top: 2rem; }
-    h1 { color: #2E7D32; font-family: 'Source Sans Pro', sans-serif; }
+    .main .block-container { padding-top: 1.5rem; }
+    h1 { color: #138808; font-family: 'Source Sans Pro', sans-serif; text-align: center; margin-bottom: 0px; }
+    h5 { text-align: center; color: #FF9933; margin-top: 0px; margin-bottom: 2rem; }
     div.stButton > button:first-child {
-        background-color: #2E7D32;
+        background-color: #138808;
         color: white;
         border-radius: 8px;
+        width: 100%;
+    }
+    .metric-card {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 8px;
+        border-left: 5px solid #ff9933;
+        margin-bottom: 10px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🥗 NutriScan AI")
-st.subheader("Instantly scan packaged food or drinks to see how healthy they really are.")
+st.title("🥗 NutriScan India AI")
+st.markdown("<h5>🇮🇳 Swasth Raho, Mast Raho! Scan snacks instantly.</h5>", unsafe_allow_html=True)
 
-# 2. Fetch the hidden API key securely from Streamlit Cloud Secrets
+# 2. Setup Multi-language Dictionary
+LANGUAGES = {
+    "English": {
+        "sub": "Select language / भाषा चुनें:",
+        "source": "Select scan method:",
+        "cam": "📸 Take Live Photo (Camera)",
+        "gal": "📁 Upload from Gallery",
+        "label": "Point at the front pack or the nutritional table at the back",
+        "analyzing": "🇮🇳 Checking with Desi Nutrition AI Guide...",
+        "score": "📊 Health Score",
+        "good": "✅ The Good (Faayde)",
+        "bad": "⚠️ The Bad (Nuksan / Red Flags)",
+        "verdict": "💡 Swasthya Verdict & Desi Alternatives",
+        "alt": "Better Alternatives:",
+        "disclaimer": "Note: This is an AI guide for general awareness. Check FSSAI labels for medical conditions."
+    },
+    "हिन्दी (Hindi)": {
+        "sub": "भाषा चुनें:",
+        "source": "स्कैन करने का तरीका चुनें:",
+        "cam": "📸 लाइव फोटो लें (कैमरा)",
+        "gal": "📁 गैलरी से अपलोड करें",
+        "label": "पैकेट के सामने का हिस्सा या पीछे की न्यूट्रिशन टेबल दिखाएं",
+        "analyzing": "🇮🇳 देसी न्यूट्रिशन एआई गाइड जांच कर रहा है...",
+        "score": "📊 हेल्थ स्कोर",
+        "good": "✅ फायदे (The Good)",
+        "bad": "⚠️ नुकसान / रेड फ्लैग्स (The Bad)",
+        "verdict": "💡 स्वास्थ्य वर्डिक्ट और देसी विकल्प",
+        "alt": "बेहतर और स्वस्थ विकल्प:",
+        "disclaimer": "नोट: यह सामान्य जागरूकता के लिए एक एआई गाइड है। चिकित्सीय स्थितियों के लिए FSSAI लेबल की जांच करें।"
+    },
+    "தமிழ் (Tamil)": {
+        "sub": "மொழியைத் தேர்ந்தெடுக்கவும்:",
+        "source": "ஸ்கேன் முறையைத் தேர்ந்தெடுக்கவும்:",
+        "cam": "📸 லைவ் போட்டோ எடுக்கவும் (கேமரா)",
+        "gal": "📁 கேலரியில் இருந்து பதிவேற்றவும்",
+        "label": "பாக்கெட்டின் முன்பக்கம் அல்லது பின்புற ஊட்டச்சத்து அட்டவணையைக் காட்டவும்",
+        "analyzing": "🇮🇳 தேசி நியூட்ரிஷன் AI ஆய்வு செய்கிறது...",
+        "score": "📊 ஆரோக்கிய மதிப்பெண்",
+        "good": "✅ நன்மைகள் (The Good)",
+        "bad": "⚠️ தீமைகள் / எச்சரிக்கைகள் (The Bad)",
+        "verdict": "💡 ஆரோக்கிய தீர்ப்பு & மாற்று வழிகள்",
+        "alt": "சிறந்த ஆரோக்கியமான தேசி மாற்று உணவுகள்:",
+        "disclaimer": "குறிப்பு: இது பொதுவான விழிப்புணர்வுக்கான AI வழிகாட்டி மட்டுமே. மருத்துவ நிலைமைகளுக்கு FSSAI லேபிள்களைச் சரிபார்க்கவும்."
+    },
+    "বাংলা (Bengali)": {
+        "sub": "ভাষা নির্বাচন করুন:",
+        "source": "স্ক্যান করার পদ্ধতি বেছে নিন:",
+        "cam": "📸 লাইভ ছবি তুলুন (ক্যামেরা)",
+        "gal": "📁 গ্যালারি থেকে আপলোড করুন",
+        "label": "প্যাকেটের সামনের অংশ বা পেছনের পুষ্টির টেবিলটি দেখান",
+        "analyzing": "🇮🇳 পুষ্টি এআই গাইড পরীক্ষা করছে...",
+        "score": "📊 হেলথ স্কোর",
+        "good": "✅ ভালো দিক (The Good)",
+        "bad": "⚠️ ক্ষতিকর দিক / রেড ফ্ল্যাগ (The Bad)",
+        "verdict": "💡 স্বাস্থ্য রায় এবং দেশি বিকল্প",
+        "alt": "সেরা স্বাস্থ্যকর বিকল্প খাবার:",
+        "disclaimer": "দ্রষ্টব্য: এটি সাধারণ সচেতনতার জন্য একটি এআই গাইড। চিকিৎসার জন্য FSSAI লেবেলগুলি যাচাই করুন।"
+    }
+}
+
+# Language Select Box
+selected_lang = st.selectbox("", list(LANGUAGES.keys()), index=0)
+ln = LANGUAGES[selected_lang]
+
+# Fetch Hidden API Key
 api_key = st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
-    st.error("🚨 Developer Configuration Error: The 'GEMINI_API_KEY' is missing in your Streamlit Advanced Settings Secrets.")
+    st.error("🚨 Developer Configuration Error: 'GEMINI_API_KEY' is missing in Streamlit Settings.")
 else:
-    # 3. Initialize the AI Model (Using gemini-2.5-flash for maximum speed on image tasks)
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-2.5-flash')
 
-    # 4. User interface for choosing how to input the image
-    source = st.radio("Select how to scan:", ("📸 Use Smartphone Camera", "📁 Upload Image from Gallery"))
+    # Selection UI
+    source = st.radio(ln["source"], (ln["cam"], ln["gal"]))
     
     uploaded_file = None
-    if source == "📸 Use Smartphone Camera":
-        # Streamlit automatically handles camera permissions on iOS/Android browsers
-        uploaded_file = st.camera_input("Position the food product or its nutrition facts label clearly")
+    if source == ln["cam"]:
+        uploaded_file = st.camera_input(ln["label"])
     else:
-        uploaded_file = st.file_uploader("Choose a photo...", type=["jpg", "jpeg", "png"])
+        uploaded_file = st.file_uploader(ln["label"], type=["jpg", "jpeg", "png"])
 
-    # 5. Process the image if it exists
     if uploaded_file is not None:
         try:
             image = Image.open(uploaded_file)
-            
-            # Preview the image to the user
             st.image(image, caption='Scanned Item', use_container_width=True)
             
             st.write("---")
-            st.subheader("🔍 Running AI Nutritional Analysis...")
+            st.subheader(ln["analyzing"])
             
-            # Robust, well-structured system prompt optimized for parsing nutrition labels
-            prompt = """
-            You are an expert clinical nutritionist and food safety expert. Analyze this image of a packaged food or beverage item. 
-            Provide a clear, objective, and consumer-friendly health assessment based on the visible branding, ingredients, or nutrition facts.
+            # The prompt now forces raw JSON output for progress bars alongside the selected translation text
+            prompt = f"""
+            You are an expert clinical nutritionist specialized in Indian packaged snacks (like Kurkure, Namkeens, Maggi, chips, sweets). 
+            Analyze this product image. Your response MUST be provided in two parts, split exactly by the string separator "|||DATA_SPLIT|||".
             
-            Format your final response cleanly with Markdown using the exact headers below:
+            PART 1: You must output a valid JSON object containing estimated nutrition values PER 100g. If exact values aren't clear, approximate reasonably based on typical Indian product recipes:
+            {{
+              "calories_percentage": (integer 0-100 where 100 means very high/dangerous per 100g, i.e. 500+ kcal),
+              "sugar_percentage": (integer 0-100 where 100 means high added sugar, i.e. 25g+),
+              "sodium_percentage": (integer 0-100 where 100 means high sodium/salt, i.e. 800mg+),
+              "fat_percentage": (integer 0-100 where 100 means high trans/saturated fats, i.e. 30g+)
+            }}
+
+            |||DATA_SPLIT|||
+
+            PART 2: Provide a consumer-friendly health assessment written completely in {selected_lang}.
+            Reference specific Indian concepts if applicable (e.g., Maida content, Palm oil usage, FSSAI regulations, red-dot categorization, or deep frying vs baking).
             
-            ### 📊 Health Score
-            Provide a definitive score out of 10 (e.g., **6/10**). Briefly state the primary reason for this score in 1 sentence.
+            Format using these exact headers:
+            ### {ln['score']}
+            Give a definitive score out of 10 (e.g., **4/10**). Explain why in 1 simple sentence.
             
-            ### ✅ The Good
-            List 1 to 3 positive nutritional attributes (e.g., high dietary fiber, low glycemic ingredients, contains essential micronutrients, zero trans-fats).
+            ### {ln['good']}
+            List 1-2 points.
             
-            ### ⚠️ The Bad (Red Flags)
-            List any concerning attributes or hidden traps (e.g., high hidden sugars, heavy presence of artificial emulsifiers, high sodium levels, ultra-processed nature, high saturated fat).
+            ### {ln['bad']}
+            List 1-2 points regarding palm oil, high sodium, artificial numbers, or refined flours (Maida).
             
-            ### 💡 Smart Verdict & Alternatives
-            * **Verdict:** A 2-sentence summary telling the user if this is safe for daily consumption, occasional consumption, or if it should be avoided.
-            * **Better Alternatives:** Give 2 specific, healthier alternative snack or beverage ideas that provide similar satisfaction but with a better health profile.
+            ### {ln['verdict']}
+            * **Verdict:** 2 sentence advice on how often to consume this snack.
+            * **{ln['alt']}** Recommend 2 healthy regional Indian alternatives (e.g., Makhana, roasted Chana, baked Poha Chivda, Murmura, etc.) instead of general Western foods.
             """
             
-            # Execute visual model inference
-            with st.spinner('Reading label and evaluating processing levels...'):
+            with st.spinner('Reading parameters...'):
                 response = model.generate_content([prompt, image])
+                raw_result = response.text
                 
-                # Render results using native markdown formatting
-                st.success("Analysis Complete!")
-                st.markdown(response.text)
+                # Split JSON data block from user text block
+                if "|||DATA_SPLIT|||" in raw_result:
+                    parts = raw_result.split("|||DATA_SPLIT|||")
+                    json_str = parts[0].strip()
+                    markdown_text = parts[1].strip()
+                    
+                    # Clean up code blocks markdown if wrapped by AI
+                    json_str = re.sub(r'^```json\s*|
+```$', '', json_str, flags=re.MULTILINE).strip()
+                    
+                    try:
+                        nutrition_data = json.loads(json_str)
+                        
+                        # Displaying Visual Progress Bars
+                        st.success("Analysis Complete!")
+                        st.subheader("📊 Estimated Nutrients Level (Per 100g)")
+                        
+                        st.write("🔥 **Calories / Energy Density**")
+                        st.progress(min(max(nutrition_data.get("calories_percentage", 0) / 100.0, 0.0), 1.0))
+                        
+                        st.write("🍬 **Added Sugar / Refined Carbs**")
+                        st.progress(min(max(nutrition_data.get("sugar_percentage", 0) / 100.0, 0.0), 1.0))
+                        
+                        st.write("🧂 **Sodium (Salt / Chatpata Masala content)**")
+                        st.progress(min(max(nutrition_data.get("sodium_percentage", 0) / 100.0, 0.0), 1.0))
+                        
+                        st.write("🛢️ **Total Fat (Palm Oil / Saturated Fats)**")
+                        st.progress(min(max(nutrition_data.get("fat_percentage", 0) / 100.0, 0.0), 1.0))
+                        st.write("---")
+                    except Exception as json_err:
+                        # Fallback if JSON fails to parse cleanly
+                        markdown_text = raw_result
+                else:
+                    markdown_text = raw_result
+
+                # Render Translated Assessment text
+                st.markdown(markdown_text)
                 
         except Exception as e:
-            st.error(f"Something went wrong during analysis. Please try again with a clearer image. Error details: {e}")
+            st.error(f"Error reading image data. Please ensure the label is flat and clearly lit. Details: {e}")
 
 st.markdown("---")
-st.caption("Disclaimer: This app uses generative AI to analyze visual labels for general educational purposes. It does not replace professional medical or dietary advice.")
+st.caption(ln["disclaimer"])
