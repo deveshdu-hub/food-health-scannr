@@ -5,6 +5,7 @@ import json
 import datetime
 import random
 import pandas as pd
+import requests
 
 # 1. Page Configuration
 st.set_page_config(
@@ -77,20 +78,16 @@ st.markdown("""
     }
     </style>
     """, unsafe_allow_html=True)
-# --- GOOGLE DRIVE DATABASE ENGINE (WEB API) ---
-import requests
 
+# --- GOOGLE DRIVE DATABASE ENGINE (WEB API) ---
 def load_user_db():
     try:
         url = st.secrets["GSCRIPT_API_URL"]
         response = requests.get(url, timeout=10)
         if response.status_code == 200:
             user_list = response.json()
-            # If the script returned data, load it into a DataFrame
             if user_list and len(user_list) > 0:
                 return pd.DataFrame(user_list)
-        
-        # If the web app is completely empty or blank, return a safe empty database layout
         return pd.DataFrame(columns=["username", "password", "age", "weight", "goals"])
     except Exception:
         return pd.DataFrame(columns=["username", "password", "age", "weight", "goals"])
@@ -100,31 +97,9 @@ def save_user_to_db(new_user_dict):
         url = st.secrets["GSCRIPT_API_URL"]
         payload = {k: str(v) for k, v in new_user_dict.items()}
         requests.post(url, json=payload, timeout=10)
-    except Exception:
-        pass
-
-
-def save_user_to_db(new_user_dict):
-    try:
-        conn = st.connection("gsheets", type=GSheetsConnection)
-        # Read existing database safely
-        try:
-            df = conn.read(ttl=0)
-        except Exception:
-            df = pd.DataFrame(columns=["username", "password", "age", "weight", "goals"])
-        
-        # Append new user profile row
-        new_row = pd.DataFrame([new_user_dict])
-        df = pd.concat([df, new_row], ignore_index=True)
-        
-        # Write back to your live Google Sheet database instantly
-        conn.update(data=df)
         st.success("✨ Health Passport safely backed up to our secure cloud database!")
-    except Exception as e:
-        st.info("💡 Passport created in secure temporary session memory!")    
-    new_row = pd.DataFrame([new_user_dict])
-    df = pd.concat([df, new_row], ignore_index=True)
-    st.info("💡 Passport created in session storage successfully!")
+    except Exception:
+        st.info("💡 Passport created in secure temporary session memory!")
 
 # Initialize Session States
 if "logged_in" not in st.session_state:
@@ -151,7 +126,7 @@ if not st.session_state["logged_in"]:
         lin_user = st.text_input("Username / Mobile", key="login_username")
         lin_pass = st.text_input("Password", type="password", key="login_password")
         if st.button("Access Account"):
-            if lin_user in user_db['username'].values:
+            if not user_db.empty and lin_user in user_db['username'].values:
                 matched_user = user_db[user_db['username'] == lin_user].iloc[0]
                 if str(matched_user['password']) == str(lin_pass):
                     st.session_state["logged_in"] = True
@@ -181,7 +156,7 @@ if not st.session_state["logged_in"]:
         ])
         
         if st.button("Create My Health Passport"):
-            if reg_user in user_db['username'].values:
+            if not user_db.empty and reg_user in user_db['username'].values:
                 st.error("This username is already taken. Try adding a number!")
             elif not reg_user or not reg_pass:
                 st.error("Please fill out a username and password.")
@@ -196,7 +171,6 @@ if not st.session_state["logged_in"]:
                 save_user_to_db(profile_data)
                 st.session_state["logged_in"] = True
                 st.session_state["user_profile"] = profile_data
-                st.success("🎉 Passport created successfully!")
                 st.rerun()
 else:
     prof = st.session_state["user_profile"]
