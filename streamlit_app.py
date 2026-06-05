@@ -79,22 +79,33 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- GOOGLE DRIVE SHEETS DATABASE ENGINE ---
+from streamlit_gsheets import GSheetsConnection
+
 def load_user_db():
     try:
-        sheet_url = st.secrets["GSHEET_URL"]
-        csv_url = sheet_url.replace("/edit?usp=sharing", "/export?format=csv")
-        return pd.read_csv(csv_url)
+        conn = st.connection("gsheets", type=GSheetsConnection)
+        return conn.read(ttl=0) # ttl=0 ensures it fetches fresh signups instantly
     except Exception:
         return pd.DataFrame(columns=["username", "password", "age", "weight", "goals"])
 
 def save_user_to_db(new_user_dict):
     try:
-        sheet_url = st.secrets["GSHEET_URL"]
-        csv_url = sheet_url.replace("/edit?usp=sharing", "/export?format=csv")
-        df = pd.read_csv(csv_url)
-    except Exception:
-        df = pd.DataFrame(columns=["username", "password", "age", "weight", "goals"])
-    
+        conn = st.connection("gsheets", type=GSheetsConnection)
+        # Read existing database safely
+        try:
+            df = conn.read(ttl=0)
+        except Exception:
+            df = pd.DataFrame(columns=["username", "password", "age", "weight", "goals"])
+        
+        # Append new user profile row
+        new_row = pd.DataFrame([new_user_dict])
+        df = pd.concat([df, new_row], ignore_index=True)
+        
+        # Write back to your live Google Sheet database instantly
+        conn.update(data=df)
+        st.success("✨ Health Passport safely backed up to our secure cloud database!")
+    except Exception as e:
+        st.info("💡 Passport created in secure temporary session memory!")    
     new_row = pd.DataFrame([new_user_dict])
     df = pd.concat([df, new_row], ignore_index=True)
     st.info("💡 Passport created in session storage successfully!")
