@@ -2,7 +2,6 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 import json
-import re
 
 # 1. Page Configuration (Indian/Mobile First Layout)
 st.set_page_config(
@@ -24,13 +23,6 @@ st.markdown("""
         border-radius: 8px;
         width: 100%;
     }
-    .metric-card {
-        background-color: #f8f9fa;
-        padding: 10px;
-        border-radius: 8px;
-        border-left: 5px solid #ff9933;
-        margin-bottom: 10px;
-    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -40,7 +32,6 @@ st.markdown("<h5>🇮🇳 Swasth Raho, Mast Raho! Scan snacks instantly.</h5>", 
 # 2. Setup Multi-language Dictionary
 LANGUAGES = {
     "English": {
-        "sub": "Select language / भाषा चुनें:",
         "source": "Select scan method:",
         "cam": "📸 Take Live Photo (Camera)",
         "gal": "📁 Upload from Gallery",
@@ -54,21 +45,19 @@ LANGUAGES = {
         "disclaimer": "Note: This is an AI guide for general awareness. Check FSSAI labels for medical conditions."
     },
     "हिन्दी (Hindi)": {
-        "sub": "भाषा चुनें:",
         "source": "स्कैन करने का तरीका चुनें:",
         "cam": "📸 लाइव फोटो लें (कैमरा)",
         "gal": "📁 गैलरी से अपलोड करें",
         "label": "पैकेट के सामने का हिस्सा या पीछे की न्यूट्रिशन टेबल दिखाएं",
-        "analyzing": "🇮🇳 देसी न्यूट्रिशन एआई गाइड जांच कर रहा है...",
-        "score": "📊 हेल्थ स्कोर",
+        "analyzing": "🇮🇳 देसी न्यूट्रिशन एআই गाइड जांच कर रहा है...",
+        "score": "📊 हेल्प स्कोर",
         "good": "✅ फायदे (The Good)",
         "bad": "⚠️ नुकसान / रेड फ्लैग्स (The Bad)",
-        "verdict": "💡 स्वास्थ्य वर्डिक्ट और देसी विकल्प",
+        "verdict": "💡 स्वास्थ्य वर्डिक्ट और विकल्प",
         "alt": "बेहतर और स्वस्थ विकल्प:",
         "disclaimer": "नोट: यह सामान्य जागरूकता के लिए एक एआई गाइड है। चिकित्सीय स्थितियों के लिए FSSAI लेबल की जांच करें।"
     },
     "தமிழ் (Tamil)": {
-        "sub": "மொழியைத் தேர்ந்தெடுக்கவும்:",
         "source": "ஸ்கேன் முறையைத் தேர்ந்தெடுக்கவும்:",
         "cam": "📸 லைவ் போட்டோ எடுக்கவும் (கேமரா)",
         "gal": "📁 கேலரியில் இருந்து பதிவேற்றவும்",
@@ -79,12 +68,11 @@ LANGUAGES = {
         "bad": "⚠️ தீமைகள் / எச்சரிக்கைகள் (The Bad)",
         "verdict": "💡 ஆரோக்கிய தீர்ப்பு & மாற்று வழிகள்",
         "alt": "சிறந்த ஆரோக்கியமான தேசி மாற்று உணவுகள்:",
-        "disclaimer": "குறிப்பு: இது பொதுவான விழிப்புணர்வுக்கான AI வழிகாட்டி மட்டுமே. மருத்துவ நிலைமைகளுக்கு FSSAI லேபிள்களைச் சரிபார்க்கவும்."
+        "disclaimer": "குறிப்பு: இது பொதுவான விдвижи உணவுக்கான AI வழிகாட்டி மட்டுமே."
     },
     "বাংলা (Bengali)": {
-        "sub": "ভাষা নির্বাচন করুন:",
         "source": "স্ক্যান করার পদ্ধতি বেছে নিন:",
-        "cam": "📸 লাইভ ছবি তুলুন (ক্যামেরা)",
+        "cam": "📸 লাইভ ছবি তুলুন (কলোরা)",
         "gal": "📁 গ্যালারি থেকে আপলোড করুন",
         "label": "প্যাকেটের সামনের অংশ বা পেছনের পুষ্টির টেবিলটি দেখান",
         "analyzing": "🇮🇳 পুষ্টি এআই গাইড পরীক্ষা করছে...",
@@ -93,7 +81,7 @@ LANGUAGES = {
         "bad": "⚠️ ক্ষতিকর দিক / রেড ফ্ল্যাগ (The Bad)",
         "verdict": "💡 স্বাস্থ্য রায় এবং দেশি বিকল্প",
         "alt": "সেরা স্বাস্থ্যকর বিকল্প খাবার:",
-        "disclaimer": "দ্রষ্টব্য: এটি সাধারণ সচেতনতার জন্য একটি এআই গাইড। চিকিৎসার জন্য FSSAI লেবেলগুলি যাচাই করুন।"
+        "disclaimer": "দ্রষ্টব্য: এটি সাধারণ সচেতনতার জন্য একটি এআই গাইড।"
     }
 }
 
@@ -105,19 +93,13 @@ ln = LANGUAGES[selected_lang]
 api_key = st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
-    st.error("🚨 Developer Configuration Error: 'GEMINI_API_KEY' is missing in Streamlit Settings.")
+    st.error("🚨 Developer Configuration Error: 'GEMINI_API_KEY' is missing.")
 else:
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-2.5-flash')
 
-    # Selection UI
     source = st.radio(ln["source"], (ln["cam"], ln["gal"]))
-    
-    uploaded_file = None
-    if source == ln["cam"]:
-        uploaded_file = st.camera_input(ln["label"])
-    else:
-        uploaded_file = st.file_uploader(ln["label"], type=["jpg", "jpeg", "png"])
+    uploaded_file = st.camera_input(ln["label"]) if source == ln["cam"] else st.file_uploader(ln["label"], type=["jpg", "jpeg", "png"])
 
     if uploaded_file is not None:
         try:
@@ -127,83 +109,83 @@ else:
             st.write("---")
             st.subheader(ln["analyzing"])
             
-            # The prompt now forces raw JSON output for progress bars alongside the selected translation text
             prompt = f"""
-            You are an expert clinical nutritionist specialized in Indian packaged snacks (like Kurkure, Namkeens, Maggi, chips, sweets). 
-            Analyze this product image. Your response MUST be provided in two parts, split exactly by the string separator "|||DATA_SPLIT|||".
+            You are an expert clinical nutritionist specialized in Indian packaged snacks. 
+            Analyze this product image. Your response MUST be provided in two parts, split exactly by "|||DATA_SPLIT|||".
             
-            PART 1: You must output a valid JSON object containing estimated nutrition values PER 100g. If exact values aren't clear, approximate reasonably based on typical Indian product recipes:
+            PART 1: Output a raw JSON object containing estimated nutrition values per 100g:
             {{
-              "calories_percentage": (integer 0-100 where 100 means very high/dangerous per 100g, i.e. 500+ kcal),
-              "sugar_percentage": (integer 0-100 where 100 means high added sugar, i.e. 25g+),
-              "sodium_percentage": (integer 0-100 where 100 means high sodium/salt, i.e. 800mg+),
-              "fat_percentage": (integer 0-100 where 100 means high trans/saturated fats, i.e. 30g+)
+              "calories_percentage": (integer 0-100),
+              "sugar_percentage": (integer 0-100),
+              "sodium_percentage": (integer 0-100),
+              "fat_percentage": (integer 0-100)
             }}
 
             |||DATA_SPLIT|||
 
             PART 2: Provide a consumer-friendly health assessment written completely in {selected_lang}.
-            Reference specific Indian concepts if applicable (e.g., Maida content, Palm oil usage, FSSAI regulations, red-dot categorization, or deep frying vs baking).
             
             Format using these exact headers:
             ### {ln['score']}
-            Give a definitive score out of 10 (e.g., **4/10**). Explain why in 1 simple sentence.
+            Give a score out of 10.
             
             ### {ln['good']}
-            List 1-2 points.
+            List points.
             
             ### {ln['bad']}
-            List 1-2 points regarding palm oil, high sodium, artificial numbers, or refined flours (Maida).
+            List points.
             
             ### {ln['verdict']}
-            * **Verdict:** 2 sentence advice on how often to consume this snack.
-            * **{ln['alt']}** Recommend 2 healthy regional Indian alternatives (e.g., Makhana, roasted Chana, baked Poha Chivda, Murmura, etc.) instead of general Western foods.
+            * **Verdict:** 2 sentence advice.
+            * **{ln['alt']}** Recommend 2 healthy Indian snack alternatives.
             """
             
-            with st.spinner('Reading parameters...'):
+            with st.spinner('Processing...'):
                 response = model.generate_content([prompt, image])
                 raw_result = response.text
                 
-                # Split JSON data block from user text block
                 if "|||DATA_SPLIT|||" in raw_result:
                     parts = raw_result.split("|||DATA_SPLIT|||")
                     json_str = parts[0].strip()
                     markdown_text = parts[1].strip()
                     
-                    # Clean up code blocks markdown if wrapped by AI
-                    json_str = re.sub(r'^```json\s*|
-```$', '', json_str, flags=re.MULTILINE).strip()
+                    # Clean up markdown code wrapper lines using a safe string approach
+                    if json_str.startswith("```"):
+                        lines = json_str.split("\n")
+                        # Remove the first line (```json) and last line (```)
+                        if lines[0].startswith("```"):
+                            lines = lines[1:]
+                        if lines[-1].startswith("```"):
+                            lines = lines[:-1]
+                        json_str = "\n".join(lines).strip()
                     
                     try:
                         nutrition_data = json.loads(json_str)
                         
-                        # Displaying Visual Progress Bars
                         st.success("Analysis Complete!")
                         st.subheader("📊 Estimated Nutrients Level (Per 100g)")
                         
                         st.write("🔥 **Calories / Energy Density**")
-                        st.progress(min(max(nutrition_data.get("calories_percentage", 0) / 100.0, 0.0), 1.0))
+                        st.progress(min(max(int(nutrition_data.get("calories_percentage", 0)) / 100.0, 0.0), 1.0))
                         
                         st.write("🍬 **Added Sugar / Refined Carbs**")
-                        st.progress(min(max(nutrition_data.get("sugar_percentage", 0) / 100.0, 0.0), 1.0))
+                        st.progress(min(max(int(nutrition_data.get("sugar_percentage", 0)) / 100.0, 0.0), 1.0))
                         
-                        st.write("🧂 **Sodium (Salt / Chatpata Masala content)**")
-                        st.progress(min(max(nutrition_data.get("sodium_percentage", 0) / 100.0, 0.0), 1.0))
+                        st.write("🧂 **Sodium (Salt Content)**")
+                        st.progress(min(max(int(nutrition_data.get("sodium_percentage", 0)) / 100.0, 0.0), 1.0))
                         
                         st.write("🛢️ **Total Fat (Palm Oil / Saturated Fats)**")
-                        st.progress(min(max(nutrition_data.get("fat_percentage", 0) / 100.0, 0.0), 1.0))
+                        st.progress(min(max(int(nutrition_data.get("fat_percentage", 0)) / 100.0, 0.0), 1.0))
                         st.write("---")
                     except Exception as json_err:
-                        # Fallback if JSON fails to parse cleanly
-                        markdown_text = raw_result
+                        pass
+                    
+                    st.markdown(markdown_text)
                 else:
-                    markdown_text = raw_result
-
-                # Render Translated Assessment text
-                st.markdown(markdown_text)
+                    st.markdown(raw_result)
                 
         except Exception as e:
-            st.error(f"Error reading image data. Please ensure the label is flat and clearly lit. Details: {e}")
+            st.error(f"Error: {e}")
 
 st.markdown("---")
 st.caption(ln["disclaimer"])
