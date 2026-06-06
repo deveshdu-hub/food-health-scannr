@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 2. Dark Text Formatting CSS Overlay (Ensures text visibility on mobile)
+# 2. Dark Text Formatting & Premium Custom Bars CSS
 st.markdown("""
     <style>
     .stApp {
@@ -76,7 +76,51 @@ st.markdown("""
         padding: 12px;
         font-size: 1.1rem;
     }
+
+    /* PREMIUM TRAFFIC METERS */
+    .meter-container {
+        margin-bottom: 15px;
+    }
+    .meter-label {
+        font-weight: bold;
+        margin-bottom: 5px;
+        display: flex;
+        justify-content: space-between;
+    }
+    .meter-bg {
+        background-color: #e0e0e0;
+        border-radius: 10px;
+        width: 100%;
+        height: 18px;
+        overflow: hidden;
+        box-shadow: inset 0px 1px 3px rgba(0,0,0,0.2);
+    }
+    .meter-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.5s ease-in-out;
+    }
     </style>
+    """, unsafe_allow_html=True)
+
+# Helper for Dynamic Color Bars
+def render_custom_meter(label, percentage):
+    pct = max(0, min(int(percentage), 100))
+    # Green if clean (0-35), Yellow if warning (36-65), Red if hazardous (66-100)
+    if pct <= 35:
+        bar_color = "#138808" # Green
+    elif pct <= 65:
+        bar_color = "#FFCC00" # Yellow
+    else:
+        bar_color = "#D32F2F" # Red
+        
+    st.markdown(f"""
+    <div class="meter-container">
+        <div class="meter-label"><span>{label}</span><span>{pct}%</span></div>
+        <div class="meter-bg">
+            <div class="meter-fill" style="width: {pct}%; background-color: {bar_color};"></div>
+        </div>
+    </div>
     """, unsafe_allow_html=True)
 
 # --- GOOGLE DRIVE DATABASE ENGINE (WEB API) ---
@@ -310,19 +354,11 @@ else:
                             nutrition_data = json.loads(json_str)
                             st.markdown("<h3>📊 Nutritional Traffic Meter (Per 100g)</h3>", unsafe_allow_html=True)
                             
-                            c_val = int(nutrition_data.get("calories_percentage", 0)) / 100.0
-                            su_val = int(nutrition_data.get("sugar_percentage", 0)) / 100.0
-                            so_val = int(nutrition_data.get("sodium_percentage", 0)) / 100.0
-                            f_val = int(nutrition_data.get("fat_percentage", 0)) / 100.0
-                            
-                            st.write("🔥 **Calories Density**")
-                            st.progress(max(0.0, min(c_val, 1.0)))
-                            st.write("🍬 **Refined Sugars / Carbs**")
-                            st.progress(max(0.0, min(su_val, 1.0)))
-                            st.write("🧂 **Salt Content (Sodium)**")
-                            st.progress(max(0.0, min(so_val, 1.0)))
-                            st.write("🛢️ **Palm Oil & Heavy Fats**")
-                            st.progress(max(0.0, min(f_val, 1.0)))
+                            # Render our premium color meters
+                            render_custom_meter("🔥 Calories Density", nutrition_data.get("calories_percentage", 0))
+                            render_custom_meter("🍬 Refined Sugars / Carbs", nutrition_data.get("sugar_percentage", 0))
+                            render_custom_meter("🧂 Salt Content (Sodium)", nutrition_data.get("sodium_percentage", 0))
+                            render_custom_meter("🛢️ Palm Oil & Heavy Fats", nutrition_data.get("fat_percentage", 0))
                             st.write("---")
                         except Exception:
                             pass
@@ -341,7 +377,6 @@ else:
         st.write("---")
         st.markdown("<h3>💬 Ask Me for Your Weekly/Monthly Plan!</h3>", unsafe_allow_html=True)
         
-        # Pull profile metadata into the AI's instruction context
         if st.session_state["logged_in"] and st.session_state["user_profile"]:
             u = st.session_state["user_profile"]
             user_context_string = f"The user is {u['age']} years old, weighs {u['weight']}kg, and their core fitness goal is {u['goals']}."
