@@ -7,7 +7,7 @@ import random
 import pandas as pd
 import requests
 
-# 1. Page Configuration
+# 1. Page Configuration & UltraTech Branding
 st.set_page_config(
     page_title="NutriScan India AI", 
     page_icon="🥗", 
@@ -15,104 +15,168 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 2. Dark Text Formatting & Premium Custom Bars CSS
+# 2. Advanced Premium UI/UX Custom Stylesheet
 st.markdown("""
     <style>
+    /* Global App Container and Tech-Gradient Background */
     .stApp {
-        background-image: linear-gradient(rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.90)), 
-        url("https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=1200&q=80");
-        background-size: cover;
-        background-position: center;
+        background: linear-gradient(135deg, #F4F7F6 0%, #E9EFF1 100%);
         background-attachment: fixed;
     }
     
-    /* Force ALL standard text, subheaders, and markdown to deep charcoal dark text */
-    .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp span, .stApp div, .stApp li {
-        color: #111111 !important;
-        font-family: 'Source Sans Pro', sans-serif;
+    /* Global Deep Charcoal Typography Override */
+    .stApp p, .stApp span, .stApp div, .stApp li {
+        color: #1A2530 !important;
+        font-family: 'Inter', -apple-system, sans-serif;
     }
     
-    h1 { color: #138808 !important; font-family: 'Georgia', serif; text-align: center; margin-bottom: 0px; font-weight: bold; }
-    .tagline { text-align: center; color: #E65100 !important; font-weight: bold; margin-top: 0px; margin-bottom: 1rem; font-size: 1.1rem; }
-    
-    .motivation-banner {
-        background: linear-gradient(135deg, #FF9933 0%, #138808 100%);
-        padding: 15px;
-        border-radius: 12px;
-        text-align: center;
-        box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
+    /* Main Branding Header */
+    .brand-title { 
+        color: #0F5132 !important; 
+        font-family: 'Cabinet Grotesk', 'Georgia', serif; 
+        text-align: center; 
+        margin-top: 10px;
+        margin-bottom: 2px; 
+        font-weight: 800;
+        font-size: 2.6rem;
+        letter-spacing: -0.5px;
     }
-    .motivation-banner * {
-        color: #ffffff !important;
-        font-weight: bold;
-    }
-    
-    .human-greeting {
-        background-color: rgba(255, 224, 178, 0.95);
-        padding: 15px;
-        border-radius: 10px;
-        border-left: 5px solid #E65100;
-        margin-bottom: 20px;
-        box-shadow: 0px 2px 5px rgba(0,0,0,0.05);
-    }
-    
-    .profile-box {
-        background-color: rgba(224, 242, 241, 0.95);
-        padding: 15px;
-        border-radius: 10px;
-        border-left: 5px solid #004d40;
-        margin-bottom: 25px;
-        box-shadow: 0px 2px 5px rgba(0,0,0,0.05);
-    }
-    
-    div.stButton > button:first-child {
-        background-color: #138808 !important;
-        color: white !important;
-        border-radius: 8px;
-        width: 100%;
-        font-weight: bold;
-        border: none;
-        padding: 12px;
+    .brand-tagline { 
+        text-align: center; 
+        color: #E65100 !important; 
+        font-weight: 600; 
+        margin-top: 0px; 
+        margin-bottom: 25px; 
         font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Premium Unified Container Card Engine */
+    .tech-card {
+        background: #FFFFFF;
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+        border: 1px solid rgba(15, 81, 50, 0.08);
+        margin-bottom: 25px;
+    }
+    
+    /* Motivational Banner Styling */
+    .motivation-banner {
+        background: linear-gradient(135deg, #115E59 0%, #0F766E 100%);
+        padding: 16px 20px;
+        border-radius: 14px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(17, 94, 89, 0.15);
+        margin-bottom: 25px;
+    }
+    .motivation-banner span {
+        color: #FFFFFF !important;
+        font-weight: 600;
+        font-size: 1.05rem;
+    }
+    
+    /* Time-of-Day Context Header Box */
+    .human-greeting {
+        background-color: #FFF7ED;
+        padding: 16px 20px;
+        border-radius: 12px;
+        border-left: 5px solid #EA580C;
+        margin-bottom: 25px;
+    }
+    .human-greeting p, .human-greeting strong {
+        color: #9A3412 !important;
+    }
+    
+    /* User Authenticated Health Passport Badge */
+    .profile-box {
+        background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+        padding: 18px;
+        border-radius: 12px;
+        border: 1px solid #A7F3D0;
+        margin-bottom: 25px;
+    }
+    .profile-box b, .profile-box span {
+        color: #065F46 !important;
+    }
+    
+    /* Modern Form Field Label Adjustments */
+    .stHeadingContainer h3 {
+        color: #0F5132 !important;
+        font-weight: 700 !important;
+        font-size: 1.3rem !important;
+        margin-bottom: 12px !important;
+    }
+    
+    /* Tech Styled Primary Buttons */
+    div.stButton > button:first-child {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        color: #FFFFFF !important;
+        border-radius: 10px !important;
+        width: 100% !important;
+        font-weight: 700 !important;
+        border: none !important;
+        padding: 14px !important;
+        font-size: 1.1rem !important;
+        box-shadow: 0 4px 12px rgba(4, 120, 87, 0.2) !important;
+        transition: all 0.2s ease !important;
+    }
+    div.stButton > button:first-child:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(4, 120, 87, 0.3) !important;
     }
 
     /* PREMIUM TRAFFIC METERS */
     .meter-container {
-        margin-bottom: 15px;
+        margin-bottom: 18px;
     }
     .meter-label {
-        font-weight: bold;
-        margin-bottom: 5px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        margin-bottom: 6px;
         display: flex;
         justify-content: space-between;
+        color: #374151 !important;
     }
     .meter-bg {
-        background-color: #e0e0e0;
-        border-radius: 10px;
+        background-color: #E5E7EB;
+        border-radius: 9999px;
         width: 100%;
-        height: 18px;
+        height: 14px;
         overflow: hidden;
-        box-shadow: inset 0px 1px 3px rgba(0,0,0,0.2);
     }
     .meter-fill {
         height: 100%;
+        border-radius: 9999px;
+        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Clean Tab Design Adjustments */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background-color: rgba(0,0,0,0.03);
+        padding: 6px;
         border-radius: 10px;
-        transition: width 0.5s ease-in-out;
+    }
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-weight: 600;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# Helper for Dynamic Color Bars
+# Helper for Dynamic Micro-Interaction Color Bars
 def render_custom_meter(label, percentage):
     pct = max(0, min(int(percentage), 100))
-    # Green if clean (0-35), Yellow if warning (36-65), Red if hazardous (66-100)
+    # Tech Palette: Safe Emerald, Alert Amber, Warning Crimson
     if pct <= 35:
-        bar_color = "#138808" # Green
+        bar_color = "#10B981" # Emerald Green
     elif pct <= 65:
-        bar_color = "#FFCC00" # Yellow
+        bar_color = "#F59E0B" # Amber Yellow
     else:
-        bar_color = "#D32F2F" # Red
+        bar_color = "#EF4444" # Crimson Red
         
     st.markdown(f"""
     <div class="meter-container">
@@ -156,12 +220,13 @@ if "messages" not in st.session_state:
     st.session_state["messages"] = []
 
 # --- APP HEADER ---
-st.title("🥗 NutriScan India")
-st.markdown("<p class='tagline'>Your Trusted Desi Health Companion 🇮🇳</p>", unsafe_allow_html=True)
+st.markdown("<h1 class='brand-title'>🥗 NutriScan India</h1>", unsafe_allow_html=True)
+st.markdown("<p class='brand-tagline'>The Future of Desi Health Tracking 🇮🇳</p>", unsafe_allow_html=True)
 
-# --- USER LOGIN / ACCOUNT INTERFACE ---
+# --- USER LOGIN / ACCOUNT INTERFACE (ENCLOSED IN TECH CARD) ---
 if not st.session_state["logged_in"]:
-    st.markdown("### 🔐 Save Your Progress (Create Profile / Login)")
+    st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
+    st.markdown("### 🔐 Secure Identity Verification")
     login_tab, signup_tab = st.tabs(["🔑 Log In", "📝 Register New Account"])
     
     user_db = load_user_db()
@@ -169,7 +234,7 @@ if not st.session_state["logged_in"]:
     with login_tab:
         lin_user = st.text_input("Username / Mobile", key="login_username")
         lin_pass = st.text_input("Password", type="password", key="login_password")
-        if st.button("Access Account"):
+        if st.button("Access Cloud Account"):
             if not user_db.empty and lin_user in user_db['username'].values:
                 matched_user = user_db[user_db['username'] == lin_user].iloc[0]
                 if str(matched_user['password']) == str(lin_pass):
@@ -199,7 +264,7 @@ if not st.session_state["logged_in"]:
             "Manage Sugar / Diabetes / BP"
         ])
         
-        if st.button("Create My Health Passport"):
+        if st.button("Generate Digital Health Passport"):
             if not user_db.empty and reg_user in user_db['username'].values:
                 st.error("This username is already taken. Try adding a number!")
             elif not reg_user or not reg_pass:
@@ -216,26 +281,25 @@ if not st.session_state["logged_in"]:
                 st.session_state["logged_in"] = True
                 st.session_state["user_profile"] = profile_data
                 st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 else:
     prof = st.session_state["user_profile"]
     st.markdown(f"""
     <div class='profile-box'>
-        👤 <b>Health Passport Linked:</b> {prof['username']} | 
-        <b>Age:</b> {prof['age']} yrs | 
-        <b>Weight:</b> {prof['weight']} kg | 
-        🎯 <b>Target:</b> {prof['goals']}
+        👤 <b>Health Passport Encrypted:</b> {prof['username']} &nbsp;|&nbsp; 
+        <b>Age:</b> {prof['age']} yrs &nbsp;|&nbsp; 
+        <b>Weight:</b> {prof['weight']} kg <br>
+        🎯 <b>Target Goal Matrix:</b> {prof['goals']}
     </div>
     """, unsafe_allow_html=True)
-    if st.button("🚪 Logout / Switch Account"):
+    if st.button("🚪 Logout / Disconnect Session"):
         st.session_state["logged_in"] = False
         st.session_state["user_profile"] = None
         st.session_state["messages"] = []
         st.session_state["scan_history"] = ""
         st.rerun()
 
-st.write("---")
-
-# 3. Motivation System
+# 3. Dynamic Motivation System
 MOTIVATION_QUOTES = [
     "✨ *'Pehla Sukh Nirogi Kaya'* — The ultimate wealth is a healthy body. Eat mindful, live vibrant!",
     "💪 Small healthy choices everyday lead to big transformations. Let's make today count!",
@@ -263,7 +327,7 @@ st.markdown(f"<div class='human-greeting'>{greeting_text}</div>", unsafe_allow_h
 # Multi-language Mapping
 LANGUAGES = {
     "English": {
-        "source": "Choose how to show me the pack:",
+        "source": "Choose scan input parameter:",
         "cam": "📸 Take Live Photo (Camera)",
         "gal": "📁 Choose from Phone Gallery",
         "label": "Show me the front design or the nutrition table at the back",
@@ -290,7 +354,7 @@ LANGUAGES = {
     }
 }
 
-selected_lang = st.selectbox("🎯 Choose Language / भाषा चुनें", list(LANGUAGES.keys()), index=0)
+selected_lang = st.selectbox("🎯 Choose Interface Language / भाषा चुनें", list(LANGUAGES.keys()), index=0)
 ln = LANGUAGES[selected_lang]
 
 # Fetch Hidden API Key
@@ -302,16 +366,21 @@ else:
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-2.5-flash')
 
+    # Scanner Control Card
+    st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
+    st.markdown(f"### 🔍 UltraTech Vision Scanner")
     source = st.radio("Scan Options", (ln["cam"], ln["gal"]), label_visibility="collapsed")
     uploaded_file = st.camera_input(ln["label"]) if source == ln["cam"] else st.file_uploader(ln["label"], type=["jpg", "jpeg", "png"])
+    st.markdown("</div>", unsafe_allow_html=True)
 
     if uploaded_file is not None:
         try:
+            st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
             image = Image.open(uploaded_file)
-            st.image(image, caption='Scanned Food Pack', use_container_width=True)
+            st.image(image, caption='Captured Media Asset', use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
             
-            st.write("---")
-            st.markdown(f"<h3>{ln['analyzing']}</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='text-align:center;'>{ln['analyzing']}</h3>", unsafe_allow_html=True)
             
             prompt = f"""
             You are an expert clinical nutritionist specialized in Indian packaged snacks. 
@@ -340,8 +409,8 @@ else:
             Then list two specific traditional Indian alternative items under the subtitle "**{ln['alt']}**".
             """
             
-            if st.button("🔥 Analyze Food Health Level"):
-                with st.spinner('Checking ingredients...'):
+            if st.button("🔥 Run UltraTech Diagnostics"):
+                with st.spinner('Parsing algorithmic matrix values...'):
                     response = model.generate_content([prompt, image])
                     raw_result = response.text
                     
@@ -352,51 +421,55 @@ else:
                         
                         try:
                             nutrition_data = json.loads(json_str)
-                            st.markdown("<h3>📊 Nutritional Traffic Meter (Per 100g)</h3>", unsafe_allow_html=True)
+                            st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
+                            st.markdown("### 📊 Macro-Nutritional Density Vectors")
                             
-                            # Render our premium color meters
-                            render_custom_meter("🔥 Calories Density", nutrition_data.get("calories_percentage", 0))
-                            render_custom_meter("🍬 Refined Sugars / Carbs", nutrition_data.get("sugar_percentage", 0))
-                            render_custom_meter("🧂 Salt Content (Sodium)", nutrition_data.get("sodium_percentage", 0))
-                            render_custom_meter("🛢️ Palm Oil & Heavy Fats", nutrition_data.get("fat_percentage", 0))
-                            st.write("---")
+                            # Premium architectural traffic lights
+                            render_custom_meter("🔥 Calories Density Index", nutrition_data.get("calories_percentage", 0))
+                            render_custom_meter("🍬 Glycemic Refined Carbs / Sugars", nutrition_data.get("sugar_percentage", 0))
+                            render_custom_meter("🧂 Sodium Content Footprint", nutrition_data.get("sodium_percentage", 0))
+                            render_custom_meter("🛢️ Hydrogenated Fats / Palm Oils", nutrition_data.get("fat_percentage", 0))
+                            st.markdown("</div>", unsafe_allow_html=True)
                         except Exception:
                             pass
                         
+                        st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
                         st.markdown(markdown_text)
+                        st.markdown("</div>", unsafe_allow_html=True)
                         st.session_state["scan_history"] = markdown_text
                     else:
+                        st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
                         st.markdown(raw_result)
+                        st.markdown("</div>", unsafe_allow_html=True)
                         st.session_state["scan_history"] = raw_result
                     
         except Exception as e:
-            # Check if it's a rate limit / quota error to show a clean message
             error_msg = str(e)
             if "429" in error_msg or "quota" in error_msg.lower():
-                st.warning("⏳ **NutriScan India is busy!** Too many people are scanning snacks right now. Please wait 30 seconds and click the button again! 😊")
+                st.warning("⏳ **NutriScan India Cloud Node is Busy!** Massive user traffic detected. Please wait 20-30 seconds and retry diagnostics! 😊")
             else:
-                st.error(f"Something glitched out while scanning. Details: {e}")
+                st.error(f"Systems Diagnostic Exception: {e}")
 
     # ================= 🤖 TUNED CHATBOT WITH USER PASSPORT DATA =================
     if st.session_state["scan_history"]:
-        st.write("---")
-        st.markdown("<h3>💬 Ask Me for Your Weekly/Monthly Plan!</h3>", unsafe_allow_html=True)
+        st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
+        st.markdown("### 💬 AI Copilot Hyper-Personalization Engine")
         
         if st.session_state["logged_in"] and st.session_state["user_profile"]:
             u = st.session_state["user_profile"]
             user_context_string = f"The user is {u['age']} years old, weighs {u['weight']}kg, and their core fitness goal is {u['goals']}."
-            st.info(f"💡 *The AI Chatbot is actively keeping your target goal (**{u['goals']}**) in mind!*")
+            st.info(f"🧬 *Target matrix optimized dynamically for item parameters targeting **{u['goals']}**.*")
         else:
             user_context_string = "The user has not logged in or set a physical profile yet."
-            st.warning("💡 *Tip: Create an account or log in above so the AI can customize your routine using your exact weight and fitness goals!*")
+            st.warning("💡 *Unauthenticated session. Synchronize profile parameters above to compile personalized daily blueprints.*")
 
-        st.write("Tell me more about your routine or ask: 'Give me a weekly diet chart incorporating these healthy swaps' or 'Suggest an Indian exercise routine for me!'")
+        st.write("Query example: *'Compile a weekly meal macro layout incorporating these alternative swaps'*")
 
         for msg in st.session_state["messages"]:
             with st.chat_message(msg["role"]):
                 st.markdown(msg["content"])
 
-        if chat_input := st.chat_input("Ask me for a personalized diet or exercise strategy..."):
+        if chat_input := st.chat_input("Input customized target parameter query..."):
             with st.chat_message("user"):
                 st.markdown(chat_input)
             st.session_state["messages"].append({"role": "user", "content": chat_input})
@@ -416,12 +489,13 @@ else:
             """
 
             with st.chat_message("assistant"):
-                with st.spinner("Writing your fitness advice card..."):
+                with st.spinner("Compiling tactical chart overlay..."):
                     chat_response = model.generate_content(chat_context_prompt)
                     bot_reply = chat_response.text
                     st.markdown(bot_reply)
             
             st.session_state["messages"].append({"role": "assistant", "content": bot_reply})
+        st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("---")
 st.caption(ln["disclaimer"])
