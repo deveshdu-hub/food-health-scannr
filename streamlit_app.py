@@ -370,7 +370,12 @@ else:
                         st.session_state["scan_history"] = raw_result
                     
         except Exception as e:
-            st.error(f"Something glitched out while scanning. Details: {e}")
+            # Check if it's a rate limit / quota error to show a clean message
+            error_msg = str(e)
+            if "429" in error_msg or "quota" in error_msg.lower():
+                st.warning("⏳ **NutriScan India is busy!** Too many people are scanning snacks right now. Please wait 30 seconds and click the button again! 😊")
+            else:
+                st.error(f"Something glitched out while scanning. Details: {e}")
 
     # ================= 🤖 TUNED CHATBOT WITH USER PASSPORT DATA =================
     if st.session_state["scan_history"]:
